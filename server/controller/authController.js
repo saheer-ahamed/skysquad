@@ -1,5 +1,5 @@
 import User from "../model/User.js";
-import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt"
 import { sendOtp, verifyOtp } from "../utils/twilio.js";
 import { jwtVerify,createToken } from "../utils/jwt.js";
 
@@ -17,21 +17,15 @@ const handleErrors = (err) => {
       error[properties.path] = properties.message;
     });
   }
-  if (err.message === "incorrect email") {
-    error.email = "that email not registered";
+  if (err.message === "incorrect phone number") {
+    error.email = "phone number not registered";
   }
   if (err.message === "incorrect password") {
-    error.password = "that password is incorrect";
+    error.password = " password is incorrect";
   }
   return error;
 };
-const maxAge = 3 * 24 * 60 * 60;
-//create token
-// const createToken = ({_id,phoneNumber,fullName}) => {
-//     return jwt.sign({ _id,fullName ,phoneNumber}, process.env.JWT_KEY, {
-//       expiresIn: maxAge,
-//     });
-// };
+
 const isPhoneNumber = /^(\+91|\+91\-|0)?[6789]\d{9}$/;
 const isPassword = /^(?=.*[a-zA-Z])(?=.*[0-9])/;
 
@@ -67,25 +61,41 @@ export const signupPost = async (req, res) => {
     res.status(400).json({ errors });
   }
 };
-// module.exports.loginGet = (req, res) => {
-//   res.render("login");
-// };
-// module.exports.loginPost = async (req, res) => {
-//   const { email, password } = req.body;
-//   console.log(email, password);
-//   try {
-//     const user = await User.login(email, password);
-//     const token = createToken(user._id);
-//     res
-//       .cookie("jwt", token, { httpOnly: true, maxAge: maxAge * 1000 })
-//       .status(200)
-//       .json({ user: user._id });
-//   } catch (error) {
-//     const errors = handleErrors(error);
-//     res.status(400).json({ errors });
-//   }
-// };
 
+export const resendOtp = (req, res) => {
+  const authHeader = req.headers.authorization || req.headers.Authorization;
+  if (!authHeader?.startsWith("Bearer ")) return res.sendStatus(401);
+
+  try {
+    const userToken = authHeader.split(" ")[1];
+    const validToken = jwtVerify(userToken)
+    if (!validToken) return res.sendStatus(403);
+    const { phoneNumber } = validToken;
+    const isOtp = sendOtp(phoneNumber);
+    if (!isOtp) return res.status(500).json(500).send("Internal Server Error");
+    res.status(200).json({status:"success"})
+  } catch (error) {
+    res.status(500).json({error:error.message})
+  }
+}
+
+export const loginPost =async (req, res) => {
+  const { phoneNumber, password } = req.body;
+  try {
+    const user = await User.findOne({ phoneNumber, verified: true })
+    if (!user) throw Error('incorrect phone number')
+    if(!user.verified) return res.status(400).json({status:"phone number not verified"})
+    const auth = await bcrypt.compare(password,user.password)
+  if (!auth) throw Error('incorrect password')
+    
+        
+    const token = createToken(user);
+    res.status(200).json({ user,token});
+  } catch (error) {
+    const errors = handleErrors(error);
+    res.status(400).json({ errors });
+  }
+}
 export const postVerifyOtp = async (req, res) => {
   const authHeader = req.headers.authorization || req.headers.Authorization;
   if (!authHeader?.startsWith("Bearer ")) return res.sendStatus(401);
