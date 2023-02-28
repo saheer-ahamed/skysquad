@@ -12,29 +12,32 @@ const createService = () => {
 
 };
 
-export const sendOtp = (phoneNumber) => {
+export const sendOtp = (mobile) => {
     return new Promise((resolve, reject) => {
         client(accountSid, authToken).verify.v2.services(serviceId)
-                .verifications
-                .create({to: `+91${phoneNumber}`, channel: 'sms'})
+            .verifications
+            .create({ to: `+91${mobile}`, channel: 'sms' })
             .then(verification => resolve(true))
             .catch(err => reject(false));
     })
 }
 
-export const verifyOtp = (phoneNumber,code) => {
+export const verifyOtp = (mobile, code) => {
     return new Promise((resolve, reject) => {
-        client(accountSid,authToken).verify.v2.services(serviceId)
-      .verificationChecks
-      .create({to: `+91${phoneNumber}`, code})
+        console.log(mobile);
+        client(accountSid, authToken).verify.v2.services(serviceId)
+            .verificationChecks
+            .create({ to: `+91${mobile}`, code: code })
             .then(verification_check => {
                 if (verification_check.status === "approved" && verification_check.valid === true) {
+                    console.log('set');
                     resolve(true);
                 }
                 else {
+                    console.log('g');
                     reject(false);
                 }
-      } );
+            }).catch(err => {reject(err)})
     })
 }
 

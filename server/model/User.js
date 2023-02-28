@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 // import {isEmail} from "validator"
 const userSchema = new mongoose.Schema({
     
-    phoneNumber: {
+    mobile: {
         type: String,
         required: [true,"Please enter an Phone Number"],
         unique: true,
@@ -13,7 +13,7 @@ const userSchema = new mongoose.Schema({
         required: [true,"Please enter password"],
         minlength:[6,'Minimum password length is 6 characters']
     },
-    fullName: {
+    fullname: {
         type: String,
         required: [true,"Please enter a full name"]
     },
@@ -40,7 +40,7 @@ userSchema.post('save', (doc, next) => {
 //fire a function before doc saved to db
 userSchema.pre('save', async function (next){
     const salt = await bcrypt.genSalt();
-    this.password=await bcrypt.hash(this.password,salt)
+    this.password= await bcrypt.hash(this.password,salt)
 
     console.log('user about to be saved &created ',this)
     next()
