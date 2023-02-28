@@ -1,5 +1,5 @@
 import User from "../model/User.js";
-import bcrypt from "bcrypt"
+import {compare} from "bcrypt"
 import { sendOtp, verifyOtp } from "../utils/twilio.js";
 import { jwtVerify,createToken } from "../utils/jwt.js";
 
@@ -88,9 +88,10 @@ export const loginPost =async (req, res) => {
     if(!user.verified) return res.status(400).json({status:"phone number not verified"})
     console.log(user.password);
     console.log(password);
-    const auth = true
+    const auth =await compare(user.password, password)
     console.log(auth);
     if (!auth) throw Error('incorrect password')
+    
     
     
     const token = createToken(user);
