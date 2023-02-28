@@ -51,7 +51,6 @@ export const signupPost = async (req, res) => {
     });
     const isOtp = sendOtp(phoneNumber);
       if (!isOtp) return res.status(500).json(500).send("Internal Server Error");
-    //   console.log(user);
     const token = createToken(user);
     res
       .status(200)
