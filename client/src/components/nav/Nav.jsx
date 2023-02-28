@@ -5,7 +5,7 @@ const Nav = () => {
     return (
         <header>
             <h2>
-                <label for="nav-toggle">
+                <label htmlFor="nav-toggle">
                     <span className="las la-bars"></span>
                 </label>
 
